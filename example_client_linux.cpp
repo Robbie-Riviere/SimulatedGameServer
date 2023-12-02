@@ -1,0 +1,113 @@
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <cstring>
+#include <errno.h>
+#include <time.h>
+#include <list>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+
+#define IP_STRN_LEN     46
+#define DEFAULT_IP (char*)"127.0.0.1"
+#define IP_ADDR "192.168.1.187"
+#define PORT (char*)"2468"
+#define BACKLOG 10
+#define STR_BUF_LEN                 256
+
+//errors :
+//common errors 
+#define MALLOC_ERROR                12
+//filereading errors
+#define FAIL_LOAD_FILE              14
+#define UNRECOGNIZED_FILE_FORMAT    20
+
+//socket errors
+#define SOCKET_ERROR                21
+#define GETADDRINFO_ERROR           22
+#define BIND_ERROR                  23
+#define CONNECT_ERROR               24
+
+#define CHECK_MALLOC(pointer, string) if(!pointer){printf("Malloc Error returned %d, %s", MALLOC_ERROR, string); exit(MALLOC_ERROR);}
+
+int sockfd;
+struct addrinfo *res; //will point to results
+
+void sigchld_handler(int s)
+{
+    // waitpid() might overwrite errno, so we save and restore it:
+    int saved_errno = errno;
+
+    while(waitpid(-1, NULL, WNOHANG) > 0);
+
+    errno = saved_errno;
+}
+
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+int main(){
+	int numbytes;  
+
+    struct addrinfo hints, *servinfo, *p;
+    struct sockaddr_storage their_addr;
+    socklen_t sin_size;
+    struct sigaction sa;
+    int yes = 1;
+    int rv;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_STREAM;
+
+    if ((rv = getaddrinfo(DEFAULT_IP, PORT, &hints, &servinfo)) != 0){
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        exit(GETADDRINFO_ERROR);
+    }
+
+    // loop through all the results and connect to the first we can
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype,
+				 p->ai_protocol)) == -1) {
+			perror("client: socket");
+			continue;
+		}
+
+		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("client: connect");
+			continue;
+		}
+		break;
+	}
+
+
+	//client is set up
+
+	char echo[25];
+	recv(sockfd, echo, 25, 0);
+	printf("%s", echo);
+	while(1){
+		send(sockfd, echo, 25, 0);
+	}
+    
+    
+    
+    printf("connected\n");
+    close(sockfd);
+    freeaddrinfo(servinfo);
+    close(sockfd);
+}
