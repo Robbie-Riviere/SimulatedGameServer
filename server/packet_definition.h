@@ -11,13 +11,15 @@ enum packet_meaning
 struct datagram
 {
     unsigned int id;
+    unsigned int crc;
     unsigned char data[127];
 };
 struct existence_packet
 {
     unsigned int id;
+    unsigned int crc;
     unsigned int timestamp;
-    unsigned char data[127 - sizeof(unsigned int)];
+    unsigned char data[127 - (1 * sizeof(unsigned int))];
 };
 union board_state
 {
@@ -32,6 +34,7 @@ static_assert(sizeof(board_state) == sizeof(unsigned int));
 struct snapshop_packet
 {
     unsigned int id;
+    unsigned int crc;
     unsigned int timestamp;
     board_state board_state;
     unsigned char data[127 - (2 * sizeof(unsigned int))];
