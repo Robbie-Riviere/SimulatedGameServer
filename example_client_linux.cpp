@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "example_client_linux.hpp"
 
 #define IP_STRN_LEN     46
 #define DEFAULT_IP (char*)"127.0.0.1"
@@ -39,17 +40,19 @@
 
 int sockfd;
 struct addrinfo *res; //will point to results
+struct addrinfo hints, *servinfo, *p;
+struct sockaddr_storage their_addr;
+socklen_t sin_size;
+struct sigaction sa;
+int yes = 1;
+int rv;
 
-int main(){
-	int numbytes;  
 
-    struct addrinfo hints, *servinfo, *p;
-    struct sockaddr_storage their_addr;
-    socklen_t sin_size;
-    struct sigaction sa;
-    int yes = 1;
-    int rv;
+addr_struct_t* search_for_servers(){
+	
+}
 
+void open_connection(){
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -74,21 +77,17 @@ int main(){
 		}
 		break;
 	}
+}
 
+void send_buffer(uint32_t* buffer, uint32_t buffer_length){
+	send(sockfd, buffer, buffer_length, 0);
+}
 
-	//client is set up
+void recv_data(uint32_t* buffer, uint32_t buffer_length){
+	recv(sockfd, buffer, buffer_length, 0);
+}
 
-	char echo[25];
-	recv(sockfd, echo, 25, 0);
-	printf("%s", echo);
-	while(1){
-		send(sockfd, echo, 25, 0);
-	}
-    
-    
-    
-    printf("connected\n");
-    close(sockfd);
+void close_connection(){
     freeaddrinfo(servinfo);
     close(sockfd);
 }

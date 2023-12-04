@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include "example_server_linux.hpp"
 
 #define IP_STRN_LEN     46
 #define DEFAULT_IP (char*)"127.0.0.1"
@@ -40,6 +41,15 @@
 int sockfd;
 struct addrinfo *res; //will point to results
 
+int numbytes;
+struct addrinfo hints, *servinfo, *p;
+struct sockaddr_storage their_addr;
+socklen_t sin_size;
+struct sigaction sa;
+int yes = 1;
+int rv;
+int new_fd[1];
+
 void sigchld_handler(int s)
 {
     // waitpid() might overwrite errno, so we save and restore it:
@@ -50,17 +60,8 @@ void sigchld_handler(int s)
     errno = saved_errno;
 }
 
-int main(){
-	int numbytes;  
-    //char buf[MAX_PACKET_LEN];
-    struct addrinfo hints, *servinfo, *p;
-    struct sockaddr_storage their_addr;
-    socklen_t sin_size;
-    struct sigaction sa;
-    int yes = 1;
-    int rv;
-
-    memset(&hints, 0, sizeof(hints));
+void open_connection(){
+	memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
@@ -106,19 +107,22 @@ int main(){
 		exit(1);
 	}
 	sin_size = sizeof(their_addr);
-	int new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-	if (new_fd == -1) {
+	new_fd[0] = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
+	if (new_fd[0] == -1) {
 		perror("accept");
 	}
-	
-	printf("connected\n");
-	//serveris set up
-    char* buf = (char*)"hello world\n";
-	send(new_fd, buf, strnlen(buf, 25), 0);
-
 
     
+}
+
+void send_buffer(uint32_t* buffer, uint32_t buffer_length){
+	send(new_fd[0], buffer, buffer_length, 0);
+}
+void recv_buffer(){
+	
+}
+
+void close_connection(){
 	close(sockfd);
-	sockfd = new_fd;
 	freeaddrinfo(servinfo);
 }
