@@ -28,7 +28,8 @@ def create_lobby():
 
     # Client Side Actions:
     elif choice == "2":
-        client.search_for_server()
+        valid_servers = client.search_for_servers()
+        print("Search complete! Valid servers:", valid_servers)
 
 
 # Lobby connecting Server and Client:
