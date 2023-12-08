@@ -1,5 +1,5 @@
-CLIENT_SOURCE = example_client_linux.cpp
-SERVER_SOURCE = example_server_linux.cpp
+CLIENT_SOURCE = example_client_linux.cpp example_client_linux.hpp client_interface.cpp
+SERVER_SOURCE = example_server_linux.cpp example_server_linux.hpp server_interface.cpp
 SOURCE = $(CLIENT_SOURCE) $(SERVER_SOURCE)
 SERVER_PROG = server_prog
 CLIENT_PROG = client_prog
