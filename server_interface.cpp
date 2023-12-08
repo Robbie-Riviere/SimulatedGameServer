@@ -32,49 +32,89 @@ include "example_server_windows.hpp"
 #include "macros.h"
 
 
-int main(int argc, char const *argv[])
+#define MAXBUFLEN 100
+
+
+
+
+// get sockaddr, IPv4 or IPv6:
+void *get_in_addr(struct sockaddr *sa)
+{
+    if (sa->sa_family == AF_INET) {
+        return &(((struct sockaddr_in*)sa)->sin_addr);
+    }
+
+    return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+int main(void)
 {
     #ifdef UNRECOGNIZED_OS_ERROR
         return UNRECOGNIZED_OS_ERROR;
     #endif
-
-    char* self_addr = (char*)"129.21.91.102";
-    
     int sockfd;
-    struct sockaddr_in server_addr, client_addr;
-    char buffer[1024];
-    socklen_t addr_size;
-    int n;
+    struct addrinfo hints, *servinfo, *p;
+    int rv;
+    int numbytes;
+    struct sockaddr_storage their_addr;
+    char buf[MAXBUFLEN];
+    socklen_t addr_len;
+    char s[INET6_ADDRSTRLEN];
 
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd < 0) {
-    perror("[-]socket error");
-    exit(1);
-    }
-    int broadcast = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &broadcast, sizeof(broadcast));
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE; // use my IP
 
-    memset(&server_addr, 0, sizeof(server_addr));
-    memset(&client_addr, 0, sizeof(client_addr));
-
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(atoi(PORT));
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-    n = bind(sockfd, (struct sockaddr*)&server_addr, sizeof(server_addr));
-    if (n < 0){
-    perror("[-]bind error");
-    exit(1);
+    if ((rv = getaddrinfo(NULL, BROADCAST_SEARCH_PORT, &hints, &servinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+        return 1;
     }
 
-    bzero(buffer, 1024);
-    addr_size = sizeof(client_addr);
-    recvfrom(sockfd, buffer, 1024, MSG_WAITALL, (struct sockaddr*)&client_addr, &addr_size);
-    printf("[+]Data recv: %s\n", buffer);
+    // loop through all the results and bind to the first we can
+    for(p = servinfo; p != NULL; p = p->ai_next) {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype,
+                p->ai_protocol)) == -1) {
+            perror("listener: socket");
+            continue;
+        }
 
-    bzero(buffer, 1024);
-    strcpy(buffer, "Welcome to the UDP Server.");
-    sendto(sockfd, buffer, 1024, 0, (struct sockaddr*)&client_addr, sizeof(client_addr));
-    printf("[+]Data send: %s\n", buffer);
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+            close(sockfd);
+            perror("listener: bind");
+            continue;
+        }
+
+        break;
+    }
+
+    if (p == NULL) {
+        fprintf(stderr, "listener: failed to bind socket\n");
+        return 2;
+    }
+    freeaddrinfo(servinfo);
+    printf("listener: waiting to recvfrom...\n");
+
+
+
+
+
+    addr_len = sizeof their_addr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+        (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+        perror("recvfrom");
+        exit(1);
+    }
+
+    printf("listener: got packet from %s\n",
+        inet_ntop(their_addr.ss_family,
+            get_in_addr((struct sockaddr *)&their_addr),
+            s, sizeof s));
+    printf("listener: packet is %d bytes long\n", numbytes);
+    buf[numbytes] = '\0';
+    printf("listener: packet contains \"%s\"\n", buf);
+
+    close(sockfd);
 
     return 0;
 }

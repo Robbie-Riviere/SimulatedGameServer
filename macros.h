@@ -1,7 +1,8 @@
 #define IP_STRN_LEN     46
 #define DEFAULT_IP (char*)"127.0.0.1"
-#define IP_ADDR "192.168.1.187"
-#define PORT (char*)"2468"
+#define BROADCAST_IP "255.255.255.255"
+#define BROADCAST_SEARCH_PORT (char*)"2468"
+#define PORT (char*)"2469"
 #define BACKLOG 10
 #define STR_BUF_LEN 256
 

@@ -27,43 +27,54 @@ include "example_client_windows.hpp"
 #include <sys/wait.h>
 #include <signal.h>
 #include "macros.h"
+#include "client_interface.hpp"
 
-
-int main(int argc, char const *argv[])
+int main(void)
 {
     #ifdef UNRECOGNIZED_OS_ERROR
         return UNRECOGNIZED_OS_ERROR;
     #endif
-
-
     int sockfd;
-    struct sockaddr_in addr;
-    char buffer[1024];
-    socklen_t addr_size;
-    char* broadcast_ip = (char*)"129.21.254.255";
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    int enable = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &enable, sizeof(int));
-
-    memset(&addr, '\0', sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(atoi(PORT));
-    addr.sin_addr.s_addr = INADDR_BROADCAST;
-
+    struct sockaddr_in their_addr; // connector's address information
+    struct hostent *he;
+    int numbytes;
     int broadcast = 1;
-    setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast, sizeof(broadcast));
+    //char broadcast = '1'; // if that doesn't work, try this
 
-    
-    bzero(buffer, 1024);
-    strcpy(buffer, "Hello World!");
-    sendto(sockfd, buffer, 1024, MSG_CONFIRM, (struct sockaddr*)&addr, sizeof(addr));
-    printf("[+]Data send: %s\n", buffer);
+    if ((he=gethostbyname(DEFAULT_IP)) == NULL) {  //todo switch DEFAULT_IP to BROADCAST_IP
+        perror("client_interface:gethostbyname");
+        exit(1);
+    }
 
-    bzero(buffer, 1024);
-    addr_size = sizeof(addr);
-    recvfrom(sockfd, buffer, 1024, MSG_WAITALL, (struct sockaddr*)&addr, &addr_size);
-    printf("[+]Data recv: %s\n", buffer);
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
+        perror("client_interface:socket");
+        exit(1);
+    }
+
+    //set socket options to be broadcast
+    if (setsockopt(sockfd, SOL_SOCKET, SO_BROADCAST, &broadcast,
+        sizeof broadcast) < 0) {
+        perror("client_interface:setsockopt()");
+        exit(1);
+    }
+    their_addr.sin_family = AF_UNSPEC;
+    their_addr.sin_port = htons(atoi(BROADCAST_SEARCH_PORT));//set target port
+    their_addr.sin_addr = *((struct in_addr *)he->h_addr);
+    memset(their_addr.sin_zero, '\0', sizeof their_addr.sin_zero);
+
+
+    //send query "are you game server?"
+    //spin thread that waits for replies
+
+    char* send_str = (char*)"hello world";
+    if ((numbytes=sendto(sockfd, send_str, strlen(send_str), 0,
+             (struct sockaddr *)&their_addr, sizeof their_addr)) == -1) {
+        exit(1);
+    }
+
+    printf("sent %d bytes to %s\n", numbytes,
+        inet_ntoa(their_addr.sin_addr));
+    close(sockfd);
 
     return 0;
 }
