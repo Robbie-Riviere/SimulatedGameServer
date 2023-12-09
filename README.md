@@ -1,6 +1,4 @@
 # SimulatedGameServer
-Creating a server base on a user's PC that will allow anyone in range to connect to it.
+Creating a server based on a user's PC that will allow anyone in range to connect to it.
 
-Milestone #1: Base game - an individual should be able to play the game against another person on a single machine
-Milestone #2: Game over a network - the game should have the ability to be played over a network where game states are sent over a network and 2 clients should be able to play on separate devices
-Milestone #3: Lobby system / Server Hosting - the biggest milestone which implements the lobby system where a hosting client can see individuals who are nearby (based on a threshold RTT)
+Our team has designed a game server to play Tic Tac Toe. On startup, the user is given two options: host, or join. If the user hosts a game, a player who wants to join can search for that game if they are within range. If a user tries to join a server when none are available, they will have the ability to host the match instead. When a player decides to host a match they will open a port for the server that will listen for players looking to join. Once connected to the server, the game will communicate between the server and clients. The game packet data will include the ID, checksum, timestamp, and boardstamp in order. This communication will continue until the game has been completed, or connection is terminated.
