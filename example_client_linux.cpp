@@ -34,7 +34,7 @@ addr_struct_t* search_for_servers(){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
 
-    if ((rv = getaddrinfo(broadcast_server_addr, PORT, &hints, &servinfo)) != 0){
+    if ((rv = getaddrinfo(broadcast_server_addr, "5121", &hints, &servinfo)) != 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(GETADDRINFO_ERROR);
     }
@@ -62,7 +62,7 @@ addr_struct_t* search_for_servers(){
 		exit(BIND_ERROR);
 	}
 	broadcast_struct.sin_family = AF_UNSPEC;
-	broadcast_struct.sin_port = htons(atoi(PORT));
+	broadcast_struct.sin_port = htons(atoi("5121"));
 	broadcast_struct.sin_addr.s_addr = inet_addr(DEFAULT_IP);
 	char* buffer = (char*)"hello world";
 	//bzero(buffer, size);
@@ -77,7 +77,7 @@ void open_connection(){ //todo add server_ip_addr as argument
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(server_ip_addr, PORT, &hints, &servinfo)) != 0){
+    if ((rv = getaddrinfo(server_ip_addr, "5121", &hints, &servinfo)) != 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(GETADDRINFO_ERROR);
     }

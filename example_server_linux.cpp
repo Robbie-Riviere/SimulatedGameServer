@@ -44,7 +44,7 @@ void open_connection(){
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(DEFAULT_IP, PORT, &hints, &servinfo)) != 0){
+    if ((rv = getaddrinfo(DEFAULT_IP, "5121", &hints, &servinfo)) != 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         exit(GETADDRINFO_ERROR);
     }

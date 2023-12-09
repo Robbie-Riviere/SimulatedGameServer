@@ -1,6 +1,45 @@
-#pragma once
-#include <stdint.h>
+#define LINUX_OS
 
+
+#ifdef WINDOWS_OS
+#define RECONGNIZED_OS
+include "example_server_windows.hpp"
+#endif
+#ifdef LINUX_OS
+#define RECONGNIZED_OS
+//#include "example_server_linux.hpp"
+#endif
+#ifdef RECONGNIZED_OS
+#define UNRECONGNIZED_OS_ERROR OS_ERROR_CODE
+#endif
+
+#include <stdio.h>
+#include <iostream>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <cstring>
+#include <errno.h>
+#include <time.h>
+#include <list>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include "macros.h"
+
+//structures that handle pings from clients
+//cp_ is for client ping
+int cp_sock;
+struct addrinfo cp_hints, *cp_servinfo, *cp_p;
+int cp_rv;
+int cp_numbytes;
+struct sockaddr_storage cp_their_addr;
+socklen_t cp_addr_len;
+char recent_client_addr[INET6_ADDRSTRLEN];
 //structures to handle everyone who is part of the server
 //structure for players (one needs to be active player the rest are spectators)
 
