@@ -78,8 +78,8 @@ void* client_ping_response(void* thread_package){
 void respond_to_client_ping(){
     //ssr_ is for server side response
     int ssr_sock;
-    struct sockaddr_in ssr_their_addr; // connector's address information
-    struct hostent *ssr_he;
+    struct addrinfo ssr_hints, *ssr_serverinfo, *ssr_p;
+    int ssr_rv;
     int ssr_numbytes;
     
     char* correct_client_addr = recent_client_addr;
@@ -89,38 +89,44 @@ void respond_to_client_ping(){
             correct_client_addr = (char*)(recent_client_addr + i + 1);
         }
     }
-    printf("%s", correct_client_addr);
-    
-    if ((ssr_he=gethostbyname(correct_client_addr)) == NULL) {
-        perror("client_interface:gethostbyname");
-        exit(1);
+
+    memset(&ssr_hints, 0, sizeof ssr_hints);
+    ssr_hints.ai_family = AF_INET; // set to AF_INET to use IPv4
+    ssr_hints.ai_socktype = SOCK_DGRAM;
+
+    if ((ssr_rv = getaddrinfo(correct_client_addr, SERVER_RESPONSE_PORT, &ssr_hints, &ssr_serverinfo)) != 0) {
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(ssr_rv));
+        return;
     }
-    //todo see if AF_INET can be unspec
-    if ((ssr_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1) {
-        perror("client_interface:socket");
+
+    // loop through all the results and make a socket
+    for(ssr_p = ssr_serverinfo; ssr_p != NULL; ssr_p = ssr_p->ai_next) {
+        if ((ssr_sock = socket(ssr_p->ai_family, ssr_p->ai_socktype,
+                ssr_p->ai_protocol)) == -1) {
+            perror("talker: socket");
+            continue;
+        }
+
+        break;
+    }
+
+    if (ssr_p == NULL) {
+        fprintf(stderr, "talker: failed to create socket\n");
+        return;
+    }
+    char* reply_message = (char*)"am server";
+    if ((ssr_numbytes = sendto(ssr_sock, reply_message, strlen(reply_message), 0,
+             ssr_p->ai_addr, ssr_p->ai_addrlen)) == -1) {
+        perror("talker: sendto");
         exit(1);
     }
 
-    int reuse_port = 1;
-    if (setsockopt(ssr_sock, SOL_SOCKET, SO_REUSEPORT, &reuse_port,
-        sizeof reuse_port) < 0) {
-        perror("client_interface:setsockopt()");
-        exit(1);
-    }
-    ssr_their_addr.sin_family = AF_UNSPEC;
-    ssr_their_addr.sin_port = htons(atoi(SERVER_RESPONSE_PORT));//set target port for server response
-    ssr_their_addr.sin_addr = *((struct in_addr *)ssr_he->h_addr);
-    memset(ssr_their_addr.sin_zero, '\0', sizeof ssr_their_addr.sin_zero);
+    freeaddrinfo(ssr_serverinfo);
 
-    //send response I am server
-    char* send_str = (char*)"am server";
-    if ((ssr_numbytes=sendto(ssr_sock, send_str, strlen(send_str), 0,
-             (struct sockaddr *)&ssr_their_addr, sizeof ssr_their_addr)) == -1) {
-        exit(1);
-    }
-    printf("sent %d bytes to %s\n", ssr_numbytes,
-        inet_ntoa(ssr_their_addr.sin_addr));
+    printf("talker: sent %d bytes to %s\n", ssr_numbytes, correct_client_addr);
     close(ssr_sock);
+
+    return;
 }
 
 //close broadcast message port
