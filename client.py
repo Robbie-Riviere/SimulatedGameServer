@@ -1,7 +1,9 @@
 import socket
 import pickle
+import threading
+import tkinter as tk
+from tkinter import messagebox
 
-# import the game
 from tic_tac_toe import TicTacToe
 
 HOST = '129.21.122.47'
@@ -12,102 +14,100 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 print(f"\nConnected to {HOST, PORT}!")
 
+
+def draw_grid(row, col):
+    global board
+    global threads
+    if game.get_player() == "O":
+        if board[row][col] == ' ':
+            board[row][col] = player
+            buttons[row][col].config(text=player, state=tk.DISABLED)
+
+            game.set_player("X")
+            s.send(pickle.dumps(board))
+
+            threading.Thread(target=listen).start()
+
+            winner = check_winner()
+            if winner:
+                messagebox.showinfo("Winner", f"Player {winner} wins!")
+                restart()
+            elif is_board_full():
+                messagebox.showinfo("Tie", "It's a tie!")
+                restart()
+
+
+def restart():
+    global window
+    window.destroy()
+    s.close()
+
+
+def check_winner():
+    global board
+    for row in range(3):
+        if all(board[row][col] == player for col in range(3)) or all(board[col][row] == player for col in range(3)):
+            return player
+        elif all(board[row][col] == "X" for col in range(3)) or all(board[col][row] == "X" for col in range(3)):
+            return "X"
+    if all(board[row][row] == player for row in range(3)) or all(board[row][2 - row] == player for row in range(3)):
+        return player
+    elif all(board[row][row] == "X" for row in range(3)) or all(board[row][2 - row] == "X" for row in range(3)):
+        return "X"
+    return None
+
+
+def is_board_full():
+    return all(board[row][col] != ' ' for row in range(3) for col in range(3))
+
+
+def update_board(updated_board):
+    global board
+    global buttons
+    for row in range(3):
+        for col in range(3):
+            if board[row][col] != updated_board[row][col]:
+                board[row][col] = "X"
+                buttons[row][col].config(text="X", state=tk.DISABLED)
+
+
+def make_buttons():
+    global buttons
+    global board
+    global window
+
+    for i in range(3):
+        for j in range(3):
+            buttons[i][j] = tk.Button(window, text=board[i][j], font=('normal', 20), width=5, height=2,
+                                      command=lambda row=i, col=j: draw_grid(row, col))
+            buttons[i][j].grid(row=i, column=j)
+
+
+def listen():
+    received_data = s.recv(1024)
+    new_board = pickle.loads(received_data)
+    update_board(new_board)
+
+    winner = check_winner()
+    if winner:
+        messagebox.showinfo("Winner", f"Player {winner} wins!")
+        restart()
+    elif is_board_full():
+        messagebox.showinfo("Tie", "It's a tie!")
+        restart()
+
+    game.set_player("O")
+
+
 # set up the game
-player_o = TicTacToe("O")
-player_coord = " "
+window = tk.Tk()
+player = "O"
+game = TicTacToe()
+window.title("Tic-Tac-Toe (Client)")
+board = [[' ' for _ in range(3)] for _ in range(3)]
+buttons = [[None for _ in range(3)] for _ in range(3)]
 
-# allow the player to suggest playing again
-rematch = True
+make_buttons()
 
-
-def ask_for_input():
-    global player_o, player_coord
-
-    coord = input(f"Enter coordinate: ")
-    valid = player_o.check_valid(coord)
-
-    if valid:
-        player_coord = coord
-    else:
-        print("Invalid coordinate.")
-        ask_for_input()
-
-
-while rematch:
-    print(f"\n\n T I C - T A C - T O E ")
-
-    # draw the grid
-    player_o.draw_grid()
-
-    # host goes first, client receives first
-    print(f"\nWaiting for other player...")
-    x_symbol_list = s.recv(1024)
-    x_symbol_list = pickle.loads(x_symbol_list)
-    player_o.update_symbol_list(x_symbol_list)
-
-    # the rest is in a loop; if either player has won, it exits
-    while not player_o.did_win("O") and not player_o.did_win("X") and not player_o.is_draw():
-        # draw grid, ask for coordinate
-        print(f"\n       Your turn!")
-        player_o.draw_grid()
-        ask_for_input()
-        player_o.edit_square(player_coord)
-
-        # draw grid again
-        player_o.draw_grid()
-
-        # pickle the symbol list and send it
-        o_symbol_list = pickle.dumps(player_o.symbol_list)
-        s.send(o_symbol_list)
-
-        # if the player won with the last move, or it's a draw, exit the loop
-        if player_o.did_win("O") or player_o.is_draw():
-            break
-
-        # wait to receive the symbol list and update it
-        print(f"\nWaiting for other player...")
-        x_symbol_list = s.recv(1024)
-        x_symbol_list = pickle.loads(x_symbol_list)
-        player_o.update_symbol_list(x_symbol_list)
-
-    # end game messages
-    if player_o.did_win("O"):
-        print(f"Congrats, you won!")
-    elif player_o.is_draw():
-        print(f"It's a draw!")
-    else:
-        print(f"Sorry, the host won.")
-
-    # host is being asked for a rematch, awaiting response
-    print(f"\nWaiting for host...")
-    host_response = s.recv(1024)
-    host_response = pickle.loads(host_response)
-    client_response = "N"
-
-    # if the host wants a rematch, then the client is asked
-    if host_response == "Y":
-        print(f"\nThe host would like a rematch!")
-        client_response = input("Rematch? (Y/N): ")
-        client_response = client_response.capitalize()
-        temp_client_resp = client_response
-
-        # let the host know what the client decided
-        client_response = pickle.dumps(client_response)
-        s.send(client_response)
-
-        # if the client wants a rematch, restart the game
-        if temp_client_resp == "Y":
-            player_o.restart()
-
-        # if the client said no, then no rematch
-        else:
-            rematch = False
-
-    # if the host said no, then no rematch
-    else:
-        print(f"\nThe host does not want a rematch.")
-        rematch = False
-
-spacer = input(f"\nThank you for playing!\nPress enter to quit...\n")
-
-s.close()
+threading.Thread(target=listen).start()
+window.mainloop()
