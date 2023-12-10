@@ -1,4 +1,3 @@
-#pragma once
 #define LINUX_OS
 
 
@@ -31,21 +30,18 @@ include "example_client_windows.hpp"
 
 #include "macros.h"
 
+using namespace std;
+
 int broadcast_sock;
 struct sockaddr_in broadcast_their_addr; // connector's address information
 struct hostent *broadcast_he;
 int broadcast_numbytes;
 int broadcast = 1;
 
-//structures to hold all current servers as volatile
-typedef struct server_list {
-    char* ip_addr_server;
-    server_list* next = nullptr;
-} server_list_t;
+//structure to hold all current servers
+list<char*> server_list;
+
 volatile bool listener_running = false;
-
-//structures to hold current game socket
-
 //strucutres to hold listening socket
 int sr_sock;
 struct addrinfo sr_hints, *sr_servinfo, *sr_p;
@@ -69,7 +65,7 @@ void ping_servers();
 void end_server_listen();
 
 //open a direct socket with selected port
-void open_socket(server_list_t* ip_addr);
+void open_socket(char* addr);
 
 //close currently active game socket
 void close_socket();

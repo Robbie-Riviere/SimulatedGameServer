@@ -96,7 +96,8 @@ void respond_to_client_ping(){
     struct addrinfo ssr_hints, *ssr_serverinfo, *ssr_p;
     int ssr_rv;
     int ssr_numbytes;
-    
+
+    //filter out the uneeded data before the addr
     char* correct_client_addr = recent_client_addr;
     for (size_t i = 0; i < strnlen(recent_client_addr, 30); i++)
     {
@@ -129,8 +130,8 @@ void respond_to_client_ping(){
         fprintf(stderr, "talker: failed to create socket\n");
         return;
     }
-    char* reply_message = (char*)"am server";
-    if ((ssr_numbytes = sendto(ssr_sock, reply_message, strlen(reply_message), 0,
+    char* reply_message = SERVER_RESPONSE;
+    if ((ssr_numbytes = sendto(ssr_sock, reply_message, SERVER_RESPONSE_LEN, 0,
              ssr_p->ai_addr, ssr_p->ai_addrlen)) == -1) {
         perror("talker: sendto");
         exit(1);

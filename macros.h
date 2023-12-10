@@ -7,6 +7,8 @@
 #define BACKLOG 10
 #define SERVER_CHECK (char*)"u server?"
 #define SERVER_CHECK_LEN strnlen(SERVER_CHECK, 11)
+#define SERVER_RESPONSE (char*)"am server!"
+#define SERVER_RESPONSE_LEN strnlen(SERVER_RESPONSE, 12)
 
 #define SERVER_RESPONSE_MSG_LENGTH 30
 #define CLIENT_PING_MST_LENGTH 30

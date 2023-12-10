@@ -69,7 +69,7 @@ void setup_server_search(){
 
     //spin thread that runs on the "server_searching(void*)"
     listener_running = true;
-    pthread_create(&listener_thread, NULL, &server_searching, nullptr);
+    pthread_create(&listener_thread, NULL, &server_searching, &server_list);
 }
 
 // get sockaddr, IPv4 or IPv6:
@@ -86,9 +86,10 @@ void* get_in_addr(struct sockaddr *sa)
 void* server_searching(void* thread_package){
     //now that udp listener port is set up, listen for server replies and print them as received
     printf("listener: waiting to recvfrom...\n");
-    char server_response_buffer[SERVER_RESPONSE_MSG_LENGTH];
+    //buffer to receive incoming server responses
+    char server_response_buffer[SERVER_RESPONSE_MSG_LENGTH+1];
     sr_addr_len = sizeof sr_their_addr;
-
+    //create strucutre to hold all incomig valid servers as a list to choose from
     while (listener_running){
         if ((sr_numbytes = recvfrom(sr_sock, server_response_buffer, SERVER_RESPONSE_MSG_LENGTH, 0, (struct sockaddr *)&sr_their_addr, &sr_addr_len)) == -1) {
             printf("server response timeout\n");
@@ -97,7 +98,36 @@ void* server_searching(void* thread_package){
             printf("listener: packet is %d bytes long\n", sr_numbytes);
             server_response_buffer[sr_numbytes] = '\0';
             printf("listener: packet contains \"%s\"\n", server_response_buffer);
-            //todo switch this to logging servers in a structure as they come in.
+            //filter out the uneeded noetwork stuff
+            char* correct_server_addr = server_addr;
+            for (size_t i = 0; i < strnlen(server_addr, 30); i++){
+                if (server_addr[i] == ':'){
+                    correct_server_addr = (char*)(server_addr + i + 1);
+                }
+            }
+            //log server if
+                //1 not already in list
+                //2 responded with a valid answer "am server"
+            if (strncmp(server_response_buffer, SERVER_RESPONSE, SERVER_RESPONSE_LEN) == 0){
+                //for (server_list* i = list_of_servers; i->next != nullptr; i = i->next){}
+                char* current_server_addr = (char*)malloc(32*sizeof(char));
+                strncpy(current_server_addr, correct_server_addr, 32);
+                printf("%s\n", correct_server_addr);
+                //append next container to linked list
+                bool not_recorded = true;
+                for (int i = 0; i < server_list.size(); i++){
+                    //if the ip address is recorded already don't add it again
+                    if (strncmp(current_server_addr, server_list.front(), 32) == 0){
+                        not_recorded = false;
+                    }
+                    //cycle through list
+                    server_list.push_back(server_list.front());
+                    server_list.pop_front();
+                }
+                if (not_recorded){
+                    server_list.push_back(current_server_addr);
+                }
+            }
         }
         sleep(0);
     }
@@ -119,6 +149,11 @@ void ping_servers(){
 
 //close broadcast port and listening thread
 void end_server_listen(){
+    //free list of servers and assocaited strings
+    while (server_list.size()){
+        free(server_list.back());
+        server_list.pop_back();
+    }
     //join spun listening thread
     listener_running = false;
     void* thread_return_struct;
@@ -130,7 +165,7 @@ void end_server_listen(){
 }
 
 //open a direct socket with selected addr
-void open_socket(server_list_t* ip_addr){
+void open_socket(char* addr){
 
 }
 
@@ -165,6 +200,14 @@ int main(void)
     ping_servers();
     sleep(8);
     //close broadcast
+    printf("\ngathered server list\n");
+    for (int i = 0; i < server_list.size(); i++){
+        printf("%s\n", server_list.front());
+        server_list.push_back(server_list.front());
+        server_list.pop_front();
+    }
+
+
     end_server_listen();
 
 
