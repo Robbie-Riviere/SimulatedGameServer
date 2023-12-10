@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import ImageTk, Image
 
 
-def main():
+def run():
     window = tk.Tk()
     window.title("Client")
     window.geometry("500x500")
@@ -28,7 +28,3 @@ def main():
         pings[i].place(x=370, y=i*120)
 
     window.mainloop()
-
-
-if __name__ == "__main__":
-    main()

@@ -1,7 +1,7 @@
 import tkinter as tk
 
 
-def main():
+def run():
     window = tk.Tk()
     window.title("Server")
     window.geometry("500x500")
@@ -14,7 +14,3 @@ def main():
 
     text_box.place(x=0, y=0)
     window.mainloop()
-
-
-if __name__ == "__main__":
-    main()
