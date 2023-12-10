@@ -16,11 +16,6 @@
 #define ACCEPT_ERROR 24
 #define DATA_SIZE 65536
 
-void sigchld_handler(int s)
-{
-    // No equivalent for Windows
-}
-
 int main()
 {
     WSADATA wsaData;
