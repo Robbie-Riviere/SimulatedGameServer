@@ -27,6 +27,8 @@ include "example_client_windows.hpp"
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <pthread.h>
+
 #include "macros.h"
 
 int broadcast_sock;
@@ -43,6 +45,18 @@ typedef struct server_list {
 volatile bool listener_running = false;
 
 //structures to hold current game socket
+
+//strucutres to hold listening socket
+int sr_sock;
+struct addrinfo sr_hints, *sr_servinfo, *sr_p;
+int sr_rv;
+int sr_numbytes;
+struct sockaddr_storage sr_their_addr;
+socklen_t sr_addr_len;
+char server_addr[INET6_ADDRSTRLEN];
+struct timeval listener_timeout;
+//structure to handle listening thread
+pthread_t listener_thread;
 
 //create broadcast socket
 //create listening thread

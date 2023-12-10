@@ -29,6 +29,8 @@ include "example_server_windows.hpp"
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <pthread.h>
+
 #include "macros.h"
 
 //structures that handle pings from clients
@@ -40,6 +42,13 @@ int cp_numbytes;
 struct sockaddr_storage cp_their_addr;
 socklen_t cp_addr_len;
 char recent_client_addr[INET6_ADDRSTRLEN];
+struct timeval timeout_struct;
+
+//thread bool to notify the thread when to stop listening for pings and stop responding
+volatile bool server_open;
+//thread structure for ping response handling
+pthread_t ping_response_thread;
+
 //structures to handle everyone who is part of the server
 //structure for players (one needs to be active player the rest are spectators)
 

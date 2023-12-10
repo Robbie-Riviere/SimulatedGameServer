@@ -5,7 +5,8 @@
 #define GAME_PORT (char*)"2469" //port to run the game over
 #define SERVER_RESPONSE_PORT (char*)"2470" //port for client to listen for servers responding
 #define BACKLOG 10
-#define STR_BUF_LEN 256
+#define SERVER_CHECK (char*)"u server?"
+#define SERVER_CHECK_LEN strnlen(SERVER_CHECK, 11)
 
 #define SERVER_RESPONSE_MSG_LENGTH 30
 #define CLIENT_PING_MST_LENGTH 30

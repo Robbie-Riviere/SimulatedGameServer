@@ -22,6 +22,8 @@ void open_server_broadcast_handler(){
     cp_hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
     cp_hints.ai_socktype = SOCK_DGRAM;
     cp_hints.ai_flags = AI_PASSIVE; // use my IP
+    timeout_struct.tv_sec = 1;
+    timeout_struct.tv_usec = 0;
 
     if ((cp_rv = getaddrinfo(NULL, BROADCAST_SEARCH_PORT, &cp_hints, &cp_servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(cp_rv));
@@ -48,29 +50,42 @@ void open_server_broadcast_handler(){
         fprintf(stderr, "listener: failed to bind socket\n");
         return;
     }
-    freeaddrinfo(cp_servinfo);
-    printf("listener: waiting to recvfrom...\n");
 
+    if (setsockopt(cp_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout_struct, sizeof timeout_struct) < 0){
+        perror("timeout set option");
+    }
+    freeaddrinfo(cp_servinfo);
+    server_open = true;
+    //start thread that runs client ping response
+    if (pthread_create(&(ping_response_thread), NULL, &client_ping_response, nullptr)){
+        perror("thread init");
+    }
     return;
 }
 
 void* client_ping_response(void* thread_package){
-    //listen for client ping:
-    char ping_message[CLIENT_PING_MST_LENGTH];
-    cp_addr_len = sizeof cp_their_addr;
-    if ((cp_numbytes = recvfrom(cp_sock, ping_message, CLIENT_PING_MST_LENGTH , 0,
-        (struct sockaddr *)&cp_their_addr, &cp_addr_len)) == -1) {
-        perror("recvfrom");
-        exit(1);
+    //todo needs to run on thread
+    while (server_open){
+        //listen for client ping:
+        char ping_message[CLIENT_PING_MST_LENGTH+1];
+        cp_addr_len = sizeof cp_their_addr;
+        if ((cp_numbytes = recvfrom(cp_sock, ping_message, CLIENT_PING_MST_LENGTH , 0,
+            (struct sockaddr *)&cp_their_addr, &cp_addr_len)) == -1) {
+            printf("recvfrom_timeout\n");
+        } else {
+            printf("listener: got packet from %s\n", inet_ntop(cp_their_addr.ss_family, get_in_addr((struct sockaddr *)&cp_their_addr), recent_client_addr, sizeof recent_client_addr));
+            printf("listener: packet is %d bytes long\n", cp_numbytes);
+            ping_message[cp_numbytes] = '\0';
+            printf("listener: packet contains \"%s\"\n", ping_message);
+            //respond to client ping, by opening a temporary port, pinging client and closing port
+            if (strncmp(SERVER_CHECK, ping_message, SERVER_CHECK_LEN) == 0){
+                printf("ping recv\n");
+                respond_to_client_ping();
+            }
+        }
+        sleep(0);
     }
 
-    printf("listener: got packet from %s\n", inet_ntop(cp_their_addr.ss_family, get_in_addr((struct sockaddr *)&cp_their_addr), recent_client_addr, sizeof recent_client_addr));
-    printf("listener: packet is %d bytes long\n", cp_numbytes);
-    ping_message[cp_numbytes-1] = '\0';
-    printf("listener: packet contains \"%s\"\n", ping_message);
-
-    //respond to client ping, by opening a temporary port, pinging client and closing port
-    respond_to_client_ping();
     return nullptr;
 }
 
@@ -133,6 +148,10 @@ void respond_to_client_ping(){
 //close listener thread
 void close_server_broadcast_handler(){
     //join client ping response thread
+    server_open = false;
+    void* thread_retrun_strcut;
+    //close out the thread
+    pthread_join(ping_response_thread, &thread_retrun_strcut);
     close(cp_sock);
 }
 
@@ -175,14 +194,11 @@ int main(void)
     #ifdef UNRECOGNIZED_OS_ERROR
         return UNRECOGNIZED_OS_ERROR;
     #endif
-    //open the broadcast handler to allow clients to ping server
+    //open the broadcast recv port and create thread to respond to 'valid pings'
     open_server_broadcast_handler();
-    //todo delete this since it will be handled by a thread
-    //wait for a ping to be heard and reply with own IP address
-    client_ping_response(nullptr);
-        //internally cloases the response port
 
     //... do game stuff
+    sleep(10);
 
     //close the soceket listening for pings
     close_server_broadcast_handler();
