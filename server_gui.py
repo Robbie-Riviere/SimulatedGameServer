@@ -6,11 +6,33 @@ def run():
     window.title("Server")
     window.geometry("500x500")
 
-    text_box = tk.Text(window, width=62, height=30)
-    users = [tk.Button(window, text=f"Player {i} Connected...\n", width=50, height=7) for i in range(1, 5)]
+    canvas = tk.Canvas(window)
+    canvas.pack()
 
-    for i in range(len(users)):
-        text_box.insert(tk.END, users[i]['text'])
+    canvas_text = canvas.create_text(200, 50, text='', font=("Times New Roman", 18))
 
-    text_box.place(x=0, y=0)
+    test_string = "Creating Game..."
+    delta = 100
+    delay = 0
+    for i in range(len(test_string) + 1):
+        s = test_string[:i]
+        update_text = lambda string=s: canvas.itemconfigure(canvas_text, text=string)
+        canvas.after(delay, update_text)
+        delay += delta
+
+    delay = 3750
+    for i in range(len(test_string) + 1, -1, -1):
+        s = test_string[:i]
+        update_text = lambda string=s: canvas.itemconfigure(canvas_text, text=string)
+        canvas.after(delay, update_text)
+        delay += delta
+
+    new_string = "Waiting for Players..."
+    delay = 6000
+    for i in range(len(new_string) + 1):
+        s = new_string[:i]
+        update_text = lambda string=s: canvas.itemconfigure(canvas_text, text=string)
+        canvas.after(delay, update_text)
+        delay += delta
+
     window.mainloop()
