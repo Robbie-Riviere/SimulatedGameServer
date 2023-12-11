@@ -1,11 +1,10 @@
 #define LINUX_OS
 
-
 #ifdef WINDOWS_OS
 include "example_client_windows.hpp"
 #endif
 #ifdef LINUX_OS
-//#include "example_client_linux.hpp"
+// #include "example_client_linux.hpp"
 #else
 #define UNRECONGNIZED_OS_ERROR OS_ERROR_CODE
 #endif
@@ -26,11 +25,13 @@ include "example_client_windows.hpp"
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <thread>
+#include <atomic>
 #include <pthread.h>
 
 #include "macros.h"
 
-using namespace std;
+    using namespace std;
 
 int broadcast_sock;
 struct sockaddr_in broadcast_their_addr; // connector's address information
@@ -38,11 +39,11 @@ struct hostent *broadcast_he;
 int broadcast_numbytes;
 int broadcast = 1;
 
-//structure to hold all current servers
-list<char*> server_list;
+// structure to hold all current servers
+list<char *> server_list;
 
-volatile bool listener_running = false;
-//strucutres to hold listening socket
+std::atomic_bool lisener_running_proper = false;
+// strucutres to hold listening socket
 int sr_sock;
 struct addrinfo sr_hints, *sr_servinfo, *sr_p;
 int sr_rv;
@@ -51,27 +52,29 @@ struct sockaddr_storage sr_their_addr;
 socklen_t sr_addr_len;
 char server_addr[INET6_ADDRSTRLEN];
 struct timeval listener_timeout;
-//structure to handle listening thread
-pthread_t listener_thread;
+// structure to handle listening thread
+std::thread listener_thread_proper;
 
-//create broadcast socket
-//create listening thread
-void setup_server_search(); 
+// create broadcast socket
+// create listening thread
+void setup_server_search();
 
-//send a new message asking broadcast if they are server
+// send a new message asking broadcast if they are server
 void ping_servers();
 
-//close broadcast port and listening thread
+// close broadcast port and listening thread
 void end_server_listen();
 
-//open a direct socket with selected port
-void open_socket(char* addr);
+// open a direct socket with selected port
+void open_socket(char *addr);
 
-//close currently active game socket
+// close currently active game socket
 void close_socket();
 
-//send stringified packet 
-void send_packet(uint8_t* packet, uint32_t packet_length);
+// send stringified packet
+void send_packet(uint8_t *packet, uint32_t packet_length);
 
-//receive stringified packet
-void recv_packet(uint8_t* packet_buffer, uint32_t buffer_len);
+// receive stringified packet
+void recv_packet(uint8_t *packet_buffer, uint32_t buffer_len);
+
+uint32_t cmp_rtt(char *addr);

@@ -1,9 +1,9 @@
 #define _WIN32_WINNT 0x501
 
+#include "pingheader.hpp"
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <stdio.h>
-
 #pragma comment(lib, "ws2_32.lib")
 
 #define MY_SOCKET_ERROR 21
@@ -17,13 +17,27 @@
 #define BACKLOG 10
 #define STR_BUF_LEN 256
 
-int main() {
+int32_t cmp_rtt(char *addr)
+{
+    icmplib::PingResult res = icmplib::Ping(std::string(addr));
+    switch (res.response)
+    {
+    case icmplib::PingResponseType::Success:
+        return (int32_t)res.delay;
+    default:
+        return -1;
+    }
+    return 0;
+}
+int main()
+{
     WSADATA wsaData;
     int sockfd;
     struct addrinfo hints, *servinfo, *p;
     int rv;
 
-    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
+    if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
+    {
         fprintf(stderr, "WSAStartup failed.\n");
         return MY_SOCKET_ERROR;
     }
@@ -32,20 +46,24 @@ int main() {
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((rv = getaddrinfo(DEFAULT_IP, PORT, &hints, &servinfo)) != 0) {
+    if ((rv = getaddrinfo(DEFAULT_IP, PORT, &hints, &servinfo)) != 0)
+    {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
         WSACleanup();
         return GETADDRINFO_ERROR;
     }
 
     // Loop through all the results and connect to the first one we can
-    for (p = servinfo; p != NULL; p = p->ai_next) {
-        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
+    for (p = servinfo; p != NULL; p = p->ai_next)
+    {
+        if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1)
+        {
             perror("client: socket");
             continue;
         }
 
-        if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == -1) {
+        if (connect(sockfd, p->ai_addr, (int)p->ai_addrlen) == -1)
+        {
             closesocket(sockfd);
             perror("client: connect");
             continue;
@@ -59,7 +77,8 @@ int main() {
     recv(sockfd, echo, 25, 0);
     printf("%s", echo);
 
-    while (1) {
+    while (1)
+    {
         send(sockfd, echo, 25, 0);
     }
 
