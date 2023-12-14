@@ -10,6 +10,10 @@
 #define SERVER_RESPONSE (char*)"am server!"
 #define SERVER_RESPONSE_LEN strnlen(SERVER_RESPONSE, 12)
 
+#define PLAYER_RESPONSE_OPONENT (char*)"oponent!"
+#define PLAYER_RESPONSE_NOT_OPONENT (char*)"!oponent"
+#define PLAYER_RESPONSE_LEN strnlen(PLAYER_RESPONSE_OPONENT, 10)
+
 #define SERVER_RESPONSE_MSG_LENGTH 30
 #define CLIENT_PING_MST_LENGTH 30
 

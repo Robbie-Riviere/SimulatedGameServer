@@ -49,7 +49,32 @@ volatile bool server_open;
 //thread structure for ping response handling
 pthread_t ping_response_thread;
 
+
+//structure to handle open connection to allow all clients to connect (gs is game server)
+int gs_sock;
+struct addrinfo *gs_res; //will point to results
+
+int gs_numbytes;
+struct addrinfo gs_hints, *gs_servinfo, *gs_p;
+struct sockaddr_storage gs_their_addr;
+socklen_t gs_sin_size;
+struct sigaction gs_sa;
+int gs_yes = 1;
+int gs_rv;
+
 //structures to handle everyone who is part of the server
+typedef struct client_connection {
+    int socket;
+    char* ip_addr;
+    bool is_oponent;
+    struct client_connection* next;
+} client_connection_t;
+
+client_connection_t* all_clients;
+client_connection_t* current_oponent;
+//function for connection listening thread 
+pthread_t server_accepting_thread;
+void* accept_clients_connections(void* threa_struct);
 //structure for players (one needs to be active player the rest are spectators)
 
 //setup server to listen for broadcast messages
@@ -58,13 +83,15 @@ void open_server_broadcast_handler();
 
 //close broadcast message port
 //close listener thread
-void close_server_broadcast_handler();
+//close accept thread
+//close accept socket
+void close_server();
 
 //open standard tcp server to listen for players to join this specific server
 void open_server();
 
 //send packet to all players on server (usually gamestate packet)
-void send_all_packet();
+void send_all_packet(char* buffer, int msg_size);
 
 //send stringified packet to oponent player
 void send_oponent_packet();

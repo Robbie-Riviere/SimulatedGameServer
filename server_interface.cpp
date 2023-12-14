@@ -147,24 +147,120 @@ void respond_to_client_ping(){
 
 //close broadcast message port
 //close listener thread
-void close_server_broadcast_handler(){
+//close accept thread
+//close accept socket
+void close_server(){
     //join client ping response thread
     server_open = false;
     void* thread_retrun_strcut;
     //close out the thread
     pthread_join(ping_response_thread, &thread_retrun_strcut);
     close(cp_sock);
+    //close out the accepting portion of the server
+    pthread_join(server_accepting_thread, &thread_retrun_strcut);
+    for (client_connection_t* i = all_clients; i != nullptr; i = i->next)
+    {
+        close(i->socket);
+    }
+    close(gs_sock);
+	freeaddrinfo(gs_servinfo);
+}
+
+void sigchld_handler(int s)
+{
+    // waitpid() might overwrite errno, so we save and restore it:
+    int saved_errno = errno;
+
+    while(waitpid(-1, NULL, WNOHANG) > 0);
+
+    errno = saved_errno;
 }
 
 //open standard tcp server to listen for players to join this specific server
 void open_server(){
+    
+    memset(&gs_hints, 0, sizeof(gs_hints));
+    gs_hints.ai_family = AF_UNSPEC;
+    gs_hints.ai_flags = AI_PASSIVE; //setting this flag allows for all IP addresses to connect
+    gs_hints.ai_socktype = SOCK_STREAM;
 
+    if ((gs_rv = getaddrinfo(NULL, GAME_PORT, &gs_hints, &gs_servinfo)) != 0){
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gs_rv));
+        exit(GETADDRINFO_ERROR);
+    }
+    printf("server_open\n");
+	for (gs_p = gs_servinfo; gs_p!= NULL; gs_p = gs_p->ai_next){
+		if ((gs_sock = socket(gs_p->ai_family, gs_p->ai_socktype, gs_p->ai_protocol)) == -1){
+		    perror("socket");
+		    continue;
+		}
 
+		if (bind(gs_sock, gs_p->ai_addr, gs_p->ai_addrlen) == -1) {
+		    close(gs_sock);
+		    perror("server: bind");
+		    continue;
+		}
+
+		break;
+	}
+	if (gs_p == NULL)  {
+		fprintf(stderr, "server: failed to bind\n");
+		exit(BIND_ERROR);
+	}
+
+	if (listen(gs_sock, BACKLOG) == -1) {
+		perror("listen");
+		exit(SOCKET_ERROR);
+	}
+
+	gs_sa.sa_handler = sigchld_handler; // reap all dead processes
+	sigemptyset(&gs_sa.sa_mask);
+	gs_sa.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &gs_sa, NULL) == -1) {
+		perror("sigaction");
+		exit(1);
+	}
+    gs_sin_size = sizeof(gs_their_addr);
+    //spin thread to continue to accep connections
+    
+    if (pthread_create(&server_accepting_thread, NULL, &accept_clients_connections, nullptr)){
+        perror("pthread create");
+    }
+}
+
+void* accept_clients_connections(void* threa_struct){
+    
+    //set up linked list of all clients
+    all_clients = nullptr;
+    client_connection_t* leaf_client = nullptr;
+    client_connection_t* current_client = (client_connection_t*)malloc(sizeof(client_connection_t));
+    while(server_open){
+        current_client->socket = accept(gs_sock, (struct sockaddr *)&gs_their_addr, &gs_sin_size);//todo add timeout
+        current_client->next = nullptr;
+        if (current_client->socket == -1) {
+            perror("accept");
+        } else {
+            if (all_clients == nullptr){
+                all_clients = current_client;
+                leaf_client = all_clients;
+                current_client = (client_connection_t*)malloc(sizeof(client_connection_t));
+            } else {
+                leaf_client->next = current_client;
+                leaf_client = leaf_client->next;
+                current_client = (client_connection_t*)malloc(sizeof(client_connection_t));
+            }
+            CHECK_MALLOC(current_client, "current client malloc error")
+        }
+    }
+    return nullptr;
 }
 
 //send packet to all players on server (usually gamestate packet)
-void send_all_packet(){
-
+void send_all_packet(char* buffer, int msg_size){
+    for (client_connection_t* i = all_clients; i->next != nullptr; i = i->next)
+    {
+        send(i->socket, buffer, 25, 0);
+    }
 }
 
 //send stringified packet to oponent player
@@ -179,8 +275,10 @@ void set_oponent(char* oponent_ip_addr){
 
 //receive message from oponent player (blocking with timeout)
 void recv_oponent_packet(uint8_t* buffer, uint32_t buffer_size){
-
+    recv(gs_sock, buffer, 25, 0);
 }
+
+
 
 //starts a thread that:
 //needs to listen for rtt packets and reply to them
@@ -200,8 +298,9 @@ int main(void)
 
     //... do game stuff
     sleep(10);
-
+    open_server();
     //close the soceket listening for pings
-    close_server_broadcast_handler();
-
+    sleep(10);
+    close_server();
+    
 }

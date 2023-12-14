@@ -90,13 +90,12 @@ void open_connection(){
 	if (new_fd[0] == -1) {
 		perror("accept");
 	}
-
-    
 }
 
 void send_buffer(uint32_t* buffer, uint32_t buffer_length){
 	send(new_fd[0], buffer, buffer_length, 0);
 }
+
 void recv_buffer(){
 	
 }

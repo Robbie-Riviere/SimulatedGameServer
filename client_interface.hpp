@@ -54,6 +54,17 @@ struct timeval listener_timeout;
 //structure to handle listening thread
 pthread_t listener_thread;
 
+//structures for client on game server (gc is for game client)
+int gc_sock;
+struct addrinfo *gc_res; //will point to results
+struct addrinfo gc_hints, *gc_servinfo, *gc_p;
+struct sockaddr_in gc_broadcast_struct;
+struct sockaddr_storage gc_their_addr;
+socklen_t gc_sin_size;
+struct sigaction gc_sa;
+int gc_yes = 1;
+int gc_rv;
+
 //create broadcast socket
 //create listening thread
 void setup_server_search(); 

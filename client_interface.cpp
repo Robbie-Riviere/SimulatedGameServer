@@ -166,30 +166,51 @@ void end_server_listen(){
 
 //open a direct socket with selected addr
 void open_socket(char* addr){
+    memset(&gc_hints, 0, sizeof(gc_hints));
+    gc_hints.ai_family = AF_UNSPEC;
+    gc_hints.ai_socktype = SOCK_STREAM;
+    
+    if ((gc_rv = getaddrinfo(addr, GAME_PORT, &gc_hints, &gc_servinfo)) != 0){
+        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gc_rv));
+        exit(GETADDRINFO_ERROR);
+    }
 
+    // loop through all the results and connect to the first we can
+	for(gc_p = gc_servinfo; gc_p != NULL; gc_p = gc_p->ai_next) {
+		if ((gc_sock = socket(gc_p->ai_family, gc_p->ai_socktype,
+				 gc_p->ai_protocol)) == -1) {
+			perror("client: socket");
+			continue;
+		}
+		if (connect(gc_sock, gc_p->ai_addr, gc_p->ai_addrlen) == -1) {
+			close(gc_sock);
+			perror("client: connect");
+			continue;
+		}
+		break;
+	}
+    
 }
 
 //close currently active game socket
 void close_socket(){
-
+    freeaddrinfo(gc_servinfo);
+    close(gc_sock);
 }
 
 //send stringified packet 
 void send_packet(uint8_t* packet, uint32_t packet_length){
-    
+    send(gc_sock, packet, packet_length, 0);
 }
 
 //receive stringified packet
 void recv_packet(uint8_t* packet_buffer, uint32_t buffer_len){
-
+    recv(gc_sock, packet_buffer, buffer_len, 0);
 }
 
 
 int main(void)
 {
-    #ifdef UNRECOGNIZED_OS_ERROR
-        return UNRECOGNIZED_OS_ERROR;
-    #endif
     
     //openbraodcast
     setup_server_search();
@@ -207,11 +228,9 @@ int main(void)
         server_list.pop_front();
     }
 
-
+    open_socket(server_list.front());
+    sleep(1);
     end_server_listen();
-
-
-    //open socket 
 
     //send packet
     //recv packet
