@@ -258,7 +258,7 @@ void* accept_clients_connections(void* threa_struct){
 }
 
 //send packet to all players on server (usually gamestate packet)
-void send_all_packet(char* buffer, int msg_size){
+void send_all_packet(char* buffer, uint32_t msg_size){
     for (client_connection_t* i = all_clients; i->next != nullptr; i = i->next)
     {
         send(i->socket, buffer, msg_size, 0);
@@ -266,7 +266,7 @@ void send_all_packet(char* buffer, int msg_size){
 }
 
 //send stringified packet to oponent player
-void send_oponent_packet(char* buffer, int msg_size){
+void send_oponent_packet(char* buffer, uint32_t msg_size){
     send(current_oponent->socket, buffer, msg_size, 0);
 }
 

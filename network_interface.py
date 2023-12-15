@@ -3,7 +3,7 @@ import time
 
 ##functions for client side
 def init_function_client_lib():
-    library_definition = ctypes.CDLL('./client_interface.so')
+    library_definition = ctypes.CDLL('./client_prog.so')
     library_definition.open_socket.argtypes = [ctypes.c_char_p]
     library_definition.send_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
     library_definition.recv_packet.argtypes = [ctypes.c_uint32]
@@ -40,7 +40,7 @@ def recv_packet(library_definition):
 
 ##functions for serverside
 def init_function_server_lib():
-    library_definition = ctypes.CDLL('./client_interface.so')
+    library_definition = ctypes.CDLL('./server_prog.so')
     #library_definition.send_all_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
     library_definition.send_oponent_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
     library_definition.recv_oponent_packet.argtypes = [ctypes.c_uint32]
@@ -73,7 +73,8 @@ def recv_oponent_packet(library_definition):
     return library_definition.recv_oponent_packet(ctypes.c_uint32(max_len))
 
 
-lib = init_function_client_lib()
-setup_server_search(lib)
+##test program section:##
+client_lib = init_function_client_lib()
+server_lib = init_function_server_lib()
 
-time.sleep(10)
+print(test_function(client_lib))

@@ -91,10 +91,10 @@ extern "C" void close_server();
 extern "C" void open_server();
 
 //send packet to all players on server (usually gamestate packet)
-extern "C" void send_all_packet(char* buffer, int msg_size);
+extern "C" void send_all_packet(char* buffer, uint32_t msg_size);
 
 //send stringified packet to oponent player
-extern "C" void send_oponent_packet(char* buffer, int msg_size);
+extern "C" void send_oponent_packet(char* buffer, uint32_t msg_size);
 
 //update the spectator and oponent structures to contian a new player as oponent
 //extern "C" void set_oponent(char* oponent_ip_addr);
