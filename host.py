@@ -1,21 +1,27 @@
 import socket
 import threading
 import tkinter as tk
+import network_interface as nint
 from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = '129.21.122.47'
-PORT = 8080
+HOST = socket.gethostname()
+PORT = 2469
 
 # set up the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(5)
 
+server_lib = nint.init_function_server_lib()
+nint.open_server_broadcast_handler(server_lib)
+
 # accept a connection from the client
 client_socket, client_address = s.accept()
 print(f"\nConnected to {HOST,PORT}!")
+
+nint.close_server(server_lib)
 
 
 def stringify():

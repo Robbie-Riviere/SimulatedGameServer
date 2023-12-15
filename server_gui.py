@@ -1,4 +1,5 @@
 import tkinter as tk
+from subprocess import call
 
 
 def run():
@@ -34,5 +35,7 @@ def run():
         update_text = lambda string=s: canvas.itemconfigure(canvas_text, text=string)
         canvas.after(delay, update_text)
         delay += delta
+
+    call(["python", "host.py"])
 
     window.mainloop()

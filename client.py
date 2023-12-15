@@ -1,12 +1,13 @@
 import socket
 import threading
+import sys
 import tkinter as tk
 from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = '129.21.122.47'
-PORT = 8080
+HOST = sys.argv[1]
+PORT = 2469
 
 # connect to the host
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -100,7 +101,6 @@ def make_buttons():
 
 def listen():
     received_data = s.recv(1024)
-    print(received_data)
     update_board(received_data.decode())
 
     winner = check_winner()
