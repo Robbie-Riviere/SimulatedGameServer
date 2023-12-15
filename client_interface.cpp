@@ -2,6 +2,10 @@
 
 void* server_searching(void* thread_package);
 
+int my_function(int i){
+    return i;
+}
+
 //create broadcast socket
 //create listening thread
 void setup_server_search(){
@@ -199,19 +203,20 @@ void close_socket(){
 }
 
 //send stringified packet 
-void send_packet(uint8_t* packet, uint32_t packet_length){
+void send_packet(char* packet, uint32_t packet_length){
     send(gc_sock, packet, packet_length, 0);
 }
 
 //receive stringified packet
-void recv_packet(uint8_t* packet_buffer, uint32_t buffer_len){
+char* recv_packet(uint32_t buffer_len){
+    char* packet_buffer = (char*)malloc(buffer_len);
     recv(gc_sock, packet_buffer, buffer_len, 0);
+    return packet_buffer;
 }
 
-
+/*
 int main(void)
 {
-    
     //openbraodcast
     setup_server_search();
     //send ping
@@ -239,4 +244,4 @@ int main(void)
     
 
     return 0;
-}
+}*/

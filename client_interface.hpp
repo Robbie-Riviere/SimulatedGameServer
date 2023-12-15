@@ -65,24 +65,26 @@ struct sigaction gc_sa;
 int gc_yes = 1;
 int gc_rv;
 
+extern "C" int my_function(int i);
+
 //create broadcast socket
 //create listening thread
-void setup_server_search(); 
+extern "C" void setup_server_search(); 
 
 //send a new message asking broadcast if they are server
-void ping_servers();
+extern "C" void ping_servers();
 
 //close broadcast port and listening thread
-void end_server_listen();
+extern "C" void end_server_listen();
 
 //open a direct socket with selected port
-void open_socket(char* addr);
+extern "C" void open_socket(char* addr);
 
 //close currently active game socket
-void close_socket();
+extern "C" void close_socket();
 
 //send stringified packet 
-void send_packet(uint8_t* packet, uint32_t packet_length);
+extern "C" void send_packet(char* packet, uint32_t packet_length);
 
 //receive stringified packet
-void recv_packet(uint8_t* packet_buffer, uint32_t buffer_len);
+extern "C" char* recv_packet(uint32_t buffer_len);

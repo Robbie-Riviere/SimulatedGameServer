@@ -241,6 +241,7 @@ void* accept_clients_connections(void* threa_struct){
             perror("accept");
         } else {
             if (all_clients == nullptr){
+                current_oponent = current_client; //set oponent to the first of the batch
                 all_clients = current_client;
                 leaf_client = all_clients;
                 current_client = (client_connection_t*)malloc(sizeof(client_connection_t));
@@ -259,23 +260,23 @@ void* accept_clients_connections(void* threa_struct){
 void send_all_packet(char* buffer, int msg_size){
     for (client_connection_t* i = all_clients; i->next != nullptr; i = i->next)
     {
-        send(i->socket, buffer, 25, 0);
+        send(i->socket, buffer, msg_size, 0);
     }
 }
 
 //send stringified packet to oponent player
-void send_oponent_packet(){
-
+void send_oponent_packet(char* buffer, int msg_size){
+    send(current_oponent->socket, buffer, msg_size, 0);
 }
 
 //update the spectator and oponent structures to contian a new player as oponent
 void set_oponent(char* oponent_ip_addr){
-
+    //not nessessary
 }
 
 //receive message from oponent player (blocking with timeout)
 void recv_oponent_packet(uint8_t* buffer, uint32_t buffer_size){
-    recv(gs_sock, buffer, 25, 0);
+    recv(current_oponent->socket, buffer, buffer_size, 0);
 }
 
 
@@ -284,10 +285,10 @@ void recv_oponent_packet(uint8_t* buffer, uint32_t buffer_size){
 //needs to listen for rtt packets and reply to them
 //needs to handle if a spectator leaves the connection.
 void spectator_handler(){
-    
+    //not nessessary
 }
 
-
+/*
 int main(void)
 {
     #ifdef UNRECOGNIZED_OS_ERROR
@@ -304,3 +305,4 @@ int main(void)
     close_server();
     
 }
+*/

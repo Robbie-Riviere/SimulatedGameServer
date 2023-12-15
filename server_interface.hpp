@@ -94,7 +94,7 @@ void open_server();
 void send_all_packet(char* buffer, int msg_size);
 
 //send stringified packet to oponent player
-void send_oponent_packet();
+void send_oponent_packet(char* buffer, int msg_size);
 
 //update the spectator and oponent structures to contian a new player as oponent
 void set_oponent(char* oponent_ip_addr);
