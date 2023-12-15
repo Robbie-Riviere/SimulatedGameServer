@@ -29,7 +29,7 @@ union board_state
         unsigned short xes;
     };
 };
-static_assert(sizeof(board_state) == sizeof(unsigned int));
+static_assert(sizeof(board_state) == sizeof(unsigned int), "The board size is wrong!");
 struct snapshop_packet
 {
     unsigned int id;
