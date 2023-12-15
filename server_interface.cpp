@@ -204,6 +204,10 @@ void open_server(){
 
 		break;
 	}
+    if (setsockopt(gs_sock, SOL_SOCKET, SO_RCVTIMEO, &timeout_struct, sizeof timeout_struct) < 0){
+        perror("timeout set option");
+    }
+
 	if (gs_p == NULL)  {
 		fprintf(stderr, "server: failed to bind\n");
 		exit(BIND_ERROR);

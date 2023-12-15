@@ -95,13 +95,14 @@ ping_servers(client_lib)
 #get num servers found
 while(get_num_servers(client_lib) == 0):
     time.sleep(.1)
-
+print(get_num_servers(client_lib))
 open_server(server_lib)
 
+open_socket(client_lib, 0)
 #connect to first server on list
 end_server_listen(client_lib)
-open_socket(client_lib, 0)
-send_packet(client_lib, "hello world\n")
+
+send_packet(client_lib, b"hello world\n")
 print(recv_oponent_packet(server_lib))
 close_server(server_lib)
 close_socket(client_lib)

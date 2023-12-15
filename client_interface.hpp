@@ -39,7 +39,7 @@ int broadcast_numbytes;
 int broadcast = 1;
 
 //structure to hold all current servers
-list<char*> server_list;
+list<char*> * volatile server_list;
 
 volatile bool listener_running = false;
 //strucutres to hold listening socket
@@ -91,3 +91,4 @@ extern "C" char* recv_packet(uint32_t buffer_len);
 
 //return the number of servers found
 extern "C" uint32_t get_num_servers();
+

@@ -9,6 +9,7 @@ int my_function(int i){
 //create broadcast socket
 //create listening thread
 void setup_server_search(){
+    server_list = new list<char*>;
     //char broadcast = '1'; // if that doesn't work, try this
     if ((broadcast_he=gethostbyname(BROADCAST_IP)) == NULL) {
         perror("client_interface:gethostbyname");
@@ -73,7 +74,7 @@ void setup_server_search(){
 
     //spin thread that runs on the "server_searching(void*)"
     listener_running = true;
-    pthread_create(&listener_thread, NULL, &server_searching, &server_list);
+    pthread_create(&listener_thread, NULL, &server_searching, server_list);
 }
 
 // get sockaddr, IPv4 or IPv6:
@@ -119,17 +120,17 @@ void* server_searching(void* thread_package){
                 printf("%s\n", correct_server_addr);
                 //append next container to linked list
                 bool not_recorded = true;
-                for (int i = 0; i < server_list.size(); i++){
+                for (int i = 0; i < server_list->size(); i++){
                     //if the ip address is recorded already don't add it again
-                    if (strncmp(current_server_addr, server_list.front(), 32) == 0){
+                    if (strncmp(current_server_addr, server_list->front(), 32) == 0){
                         not_recorded = false;
                     }
                     //cycle through list
-                    server_list.push_back(server_list.front());
-                    server_list.pop_front();
+                    server_list->push_back(server_list->front());
+                    server_list->pop_front();
                 }
                 if (not_recorded){
-                    server_list.push_back(current_server_addr);
+                    server_list->push_back(current_server_addr);
                 }
             }
         }
@@ -154,9 +155,9 @@ void ping_servers(){
 //close broadcast port and listening thread
 void end_server_listen(){
     //free list of servers and assocaited strings
-    while (server_list.size()){
-        free(server_list.back());
-        server_list.pop_back();
+    while (server_list->size()){
+        free(server_list->back());
+        server_list->pop_back();
     }
     //join spun listening thread
     listener_running = false;
@@ -174,10 +175,10 @@ void open_socket(uint32_t index){
     gc_hints.ai_family = AF_UNSPEC;
     gc_hints.ai_socktype = SOCK_STREAM;
     for (int i = 0; i < index; i++){
-        server_list.push_back(server_list.front());
-        server_list.pop_front();
+        server_list->push_back(server_list->front());
+        server_list->pop_front();
     }
-    if ((gc_rv = getaddrinfo(server_list.front(), GAME_PORT, &gc_hints, &gc_servinfo)) != 0){
+    if ((gc_rv = getaddrinfo((server_list->front()), GAME_PORT, &gc_hints, &gc_servinfo)) != 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gc_rv));
         exit(GETADDRINFO_ERROR);
     }
@@ -220,7 +221,7 @@ char* recv_packet(uint32_t buffer_len){
 
 //return the number of servers found
 uint32_t get_num_servers(){
-    return (uint32_t)(server_list.size());
+    return (uint32_t)(server_list->size());
 }
 
 /*
