@@ -6,8 +6,10 @@ from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = sys.argv[1]
-PORT = 2469
+HOST = str(sys.argv[1]).strip("b'")
+PORT = 2600
+
+print(HOST)
 
 # connect to the host
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

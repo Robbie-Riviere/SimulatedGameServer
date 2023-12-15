@@ -6,22 +6,25 @@ from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = socket.gethostname()
-PORT = 2469
+hostname = socket.gethostname()
+HOST = socket.gethostbyname(hostname + ".local")
+PORT = 2600
+
+print(HOST)
+
+server_lib = nint.init_function_server_lib()
+nint.open_server_broadcast_handler(server_lib)
 
 # set up the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind((HOST, PORT))
 s.listen(5)
 
-server_lib = nint.init_function_server_lib()
-nint.open_server_broadcast_handler(server_lib)
-
 # accept a connection from the client
 client_socket, client_address = s.accept()
 print(f"\nConnected to {HOST,PORT}!")
 
-nint.close_server(server_lib)
+# nint.close_server(server_lib)
 
 
 def stringify():
