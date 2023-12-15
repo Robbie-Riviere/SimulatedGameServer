@@ -9,6 +9,8 @@ def init_function_client_lib():
     library_definition.recv_packet.argtypes = [ctypes.c_uint32]
     library_definition.recv_packet.restype = ctypes.c_char_p
     library_definition.get_num_servers.restype = ctypes.c_uint32
+    library_definition.get_server_by_index.argtypes = [ctypes.c_uint32]
+    library_definition.get_server_by_index.restype = ctypes.c_char_p
     return library_definition
 
 #test function for testing ctypes library access
@@ -19,24 +21,34 @@ def test_function(library_definition):
 def setup_server_search(library_definition):
     library_definition.setup_server_search()
     return
+
 def ping_servers(library_definition):
     library_definition.ping_servers()
     return
+
 def end_server_listen(library_definition):
     library_definition.end_server_listen()
     return
+
 def open_socket(library_definition, index):
     library_definition.open_socket(ctypes.c_uint32(index))
     return
+
+def get_server_by_index(library_definition, index):
+    return library_definition.get_server_by_index(ctypes.c_uint32(index))
+
 def close_socket(library_definition):
     library_definition.close_socket()
     return
+
 def send_packet(library_definition, packet):
     library_definition.send_packet(ctypes.c_char_p(packet), len(packet))
     return
+
 def recv_packet(library_definition):
     max_len = 9
     return library_definition.recv_packet(ctypes.c_uint32(max_len))
+
 def get_num_servers(library_definition):
     return library_definition.get_num_servers()
 
@@ -95,14 +107,10 @@ ping_servers(client_lib)
 #get num servers found
 while(get_num_servers(client_lib) == 0):
     time.sleep(.1)
-print(get_num_servers(client_lib))
-open_server(server_lib)
+print(get_server_by_index(client_lib, 0))
 
-open_socket(client_lib, 0)
 #connect to first server on list
 end_server_listen(client_lib)
 
-send_packet(client_lib, b"hello world\n")
-print(recv_oponent_packet(server_lib))
+
 close_server(server_lib)
-close_socket(client_lib)

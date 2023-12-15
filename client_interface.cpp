@@ -224,6 +224,14 @@ uint32_t get_num_servers(){
     return (uint32_t)(server_list->size());
 }
 
+ char* get_server_by_index(uint32_t index){
+    for (int i = 0; i < index; i++){
+        server_list->push_back(server_list->front());
+        server_list->pop_front();
+    }
+    return server_list->front();
+ }
+
 /*
 int main(void)
 {

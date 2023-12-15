@@ -92,3 +92,5 @@ extern "C" char* recv_packet(uint32_t buffer_len);
 //return the number of servers found
 extern "C" uint32_t get_num_servers();
 
+extern "C" char* get_server_by_index(uint32_t index);
+
