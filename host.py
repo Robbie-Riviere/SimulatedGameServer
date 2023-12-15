@@ -1,13 +1,19 @@
 import socket
-import pickle
 import threading
 import tkinter as tk
+import network_interface as nint
 from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = '129.21.122.47'
-PORT = 8080
+hostname = socket.gethostname()
+HOST = socket.gethostbyname(hostname + ".local")
+PORT = 2600
+
+print(HOST)
+
+server_lib = nint.init_function_server_lib()
+nint.open_server_broadcast_handler(server_lib)
 
 # set up the server
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -18,18 +24,36 @@ s.listen(5)
 client_socket, client_address = s.accept()
 print(f"\nConnected to {HOST,PORT}!")
 
+# nint.close_server(server_lib)
+
+
+def stringify():
+    global board
+    new_board = ""
+
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == "X":
+                new_board = new_board + "X"
+            elif board[i][j] == "O":
+                new_board = new_board + "O"
+            else:
+                new_board = new_board + "."
+
+    return new_board
+
 
 def draw_grid(row, col):
     global board
-    global threads
     if game.get_player() == "X":
         if board[row][col] == ' ':
             board[row][col] = player
             buttons[row][col].config(text=player, state=tk.DISABLED)
 
             game.set_player("O")
-            send_data = pickle.dumps(board)
-            client_socket.send(send_data)
+            send_data = stringify()
+            print(send_data)
+            client_socket.send(send_data.encode())
 
             threading.Thread(target=listen).start()
 
@@ -71,7 +95,7 @@ def update_board(updated_board):
     global buttons
     for row in range(3):
         for col in range(3):
-            if board[row][col] != updated_board[row][col]:
+            if board[row][col] != updated_board[(row*3)+col] and updated_board[(row*3)+col] != ".":
                 buttons[row][col].config(text="O", state=tk.DISABLED)
                 board[row][col] = "O"
 
@@ -90,8 +114,7 @@ def make_buttons():
 
 def listen():
     received_data = client_socket.recv(1024)
-    new_board = pickle.loads(received_data)
-    update_board(new_board)
+    update_board(received_data.decode())
 
     winner = check_winner()
     if winner:

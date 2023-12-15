@@ -1,13 +1,15 @@
 import socket
-import pickle
 import threading
+import sys
 import tkinter as tk
 from tkinter import messagebox
 
 from tic_tac_toe import TicTacToe
 
-HOST = '129.21.122.47'
-PORT = 8080
+HOST = str(sys.argv[1]).strip("b'")
+PORT = 2600
+
+print(HOST)
 
 # connect to the host
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,16 +17,32 @@ s.connect((HOST, PORT))
 print(f"\nConnected to {HOST, PORT}!")
 
 
+def stringify():
+    global board
+    new_board = ""
+
+    for i in range(3):
+        for j in range(3):
+            if board[i][j] == "X":
+                new_board = new_board + "X"
+            elif board[i][j] == "O":
+                new_board = new_board + "O"
+            else:
+                new_board = new_board + "."
+
+    return new_board
+
+
 def draw_grid(row, col):
     global board
-    global threads
     if game.get_player() == "O":
         if board[row][col] == ' ':
             board[row][col] = player
             buttons[row][col].config(text=player, state=tk.DISABLED)
 
             game.set_player("X")
-            s.send(pickle.dumps(board))
+            send_data = stringify()
+            s.send(send_data.encode())
 
             threading.Thread(target=listen).start()
 
@@ -66,7 +84,7 @@ def update_board(updated_board):
     global buttons
     for row in range(3):
         for col in range(3):
-            if board[row][col] != updated_board[row][col]:
+            if board[row][col] != updated_board[(row*3)+col] and updated_board[(row*3)+col] != ".":
                 board[row][col] = "X"
                 buttons[row][col].config(text="X", state=tk.DISABLED)
 
@@ -85,8 +103,7 @@ def make_buttons():
 
 def listen():
     received_data = s.recv(1024)
-    new_board = pickle.loads(received_data)
-    update_board(new_board)
+    update_board(received_data.decode())
 
     winner = check_winner()
     if winner:
