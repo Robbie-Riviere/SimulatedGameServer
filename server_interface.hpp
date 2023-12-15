@@ -75,6 +75,7 @@ client_connection_t* current_oponent;
 //function for connection listening thread 
 pthread_t server_accepting_thread;
 
+volatile bool oponent_connected = false;
 //structure for players (one needs to be active player the rest are spectators)
 
 //setup server to listen for broadcast messages
@@ -101,3 +102,7 @@ extern "C" void send_oponent_packet(char* buffer, uint32_t msg_size);
 
 //receive message from oponent player (blocking with timeout)
 extern "C" char* recv_oponent_packet(uint32_t buffer_size);
+
+//returns null if no oponent has been set, otherwise returns the string of the IP address of the oponent
+extern "C" char* get_oponent();
+

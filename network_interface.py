@@ -4,10 +4,11 @@ import time
 ##functions for client side
 def init_function_client_lib():
     library_definition = ctypes.CDLL('./client_prog.so')
-    library_definition.open_socket.argtypes = [ctypes.c_char_p]
+    library_definition.open_socket.argtypes = [ctypes.c_uint32]
     library_definition.send_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
     library_definition.recv_packet.argtypes = [ctypes.c_uint32]
     library_definition.recv_packet.restype = ctypes.c_char_p
+    library_definition.get_num_servers.restype = ctypes.c_uint32
     return library_definition
 
 #test function for testing ctypes library access
@@ -24,8 +25,8 @@ def ping_servers(library_definition):
 def end_server_listen(library_definition):
     library_definition.end_server_listen()
     return
-def open_socket(library_definition, ip_addr):
-    library_definition.open_socket(ctypes.c_char_p(ip_addr))
+def open_socket(library_definition, index):
+    library_definition.open_socket(ctypes.c_uint32(index))
     return
 def close_socket(library_definition):
     library_definition.close_socket()
@@ -36,6 +37,8 @@ def send_packet(library_definition, packet):
 def recv_packet(library_definition):
     max_len = 9
     return library_definition.recv_packet(ctypes.c_uint32(max_len))
+def get_num_servers(library_definition):
+    return library_definition.get_num_servers()
 
 
 ##functions for serverside
@@ -45,6 +48,7 @@ def init_function_server_lib():
     library_definition.send_oponent_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
     library_definition.recv_oponent_packet.argtypes = [ctypes.c_uint32]
     library_definition.recv_oponent_packet.restype = ctypes.c_char_p
+    library_definition.get_oponent.restype = ctypes.c_char_p
     return library_definition
 
 def open_server_broadcast_handler(library_definition):
@@ -72,9 +76,32 @@ def recv_oponent_packet(library_definition):
     max_len = 9
     return library_definition.recv_oponent_packet(ctypes.c_uint32(max_len))
 
+def get_oponent(library_definition):
+    return library_definition.get_oponent()
 
 ##test program section:##
 client_lib = init_function_client_lib()
 server_lib = init_function_server_lib()
 
-print(test_function(client_lib))
+#client listens for server response
+setup_server_search(client_lib)
+
+#server starts listening
+open_server_broadcast_handler(server_lib)
+
+#client pings server
+ping_servers(client_lib)
+
+#get num servers found
+while(get_num_servers(client_lib) == 0):
+    time.sleep(.1)
+
+open_server(server_lib)
+
+#connect to first server on list
+end_server_listen(client_lib)
+open_socket(client_lib, 0)
+send_packet(client_lib, "hello world\n")
+print(recv_oponent_packet(server_lib))
+close_server(server_lib)
+close_socket(client_lib)

@@ -78,7 +78,7 @@ extern "C" void ping_servers();
 extern "C" void end_server_listen();
 
 //open a direct socket with selected port
-extern "C" void open_socket(char* addr);
+extern "C" void open_socket(uint32_t index);
 
 //close currently active game socket
 extern "C" void close_socket();
@@ -88,3 +88,6 @@ extern "C" void send_packet(char* packet, uint32_t packet_length);
 
 //receive stringified packet
 extern "C" char* recv_packet(uint32_t buffer_len);
+
+//return the number of servers found
+extern "C" uint32_t get_num_servers();

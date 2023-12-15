@@ -169,12 +169,15 @@ void end_server_listen(){
 }
 
 //open a direct socket with selected addr
-void open_socket(char* addr){
+void open_socket(uint32_t index){
     memset(&gc_hints, 0, sizeof(gc_hints));
     gc_hints.ai_family = AF_UNSPEC;
     gc_hints.ai_socktype = SOCK_STREAM;
-    
-    if ((gc_rv = getaddrinfo(addr, GAME_PORT, &gc_hints, &gc_servinfo)) != 0){
+    for (int i = 0; i < index; i++){
+        server_list.push_back(server_list.front());
+        server_list.pop_front();
+    }
+    if ((gc_rv = getaddrinfo(server_list.front(), GAME_PORT, &gc_hints, &gc_servinfo)) != 0){
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(gc_rv));
         exit(GETADDRINFO_ERROR);
     }
@@ -209,9 +212,15 @@ void send_packet(char* packet, uint32_t packet_length){
 
 //receive stringified packet
 char* recv_packet(uint32_t buffer_len){
-    char* packet_buffer = (char*)malloc(buffer_len);
+    char* packet_buffer = (char*)malloc(buffer_len+1);
     recv(gc_sock, packet_buffer, buffer_len, 0);
+    packet_buffer[buffer_len] = (char)0;
     return packet_buffer;
+}
+
+//return the number of servers found
+uint32_t get_num_servers(){
+    return (uint32_t)(server_list.size());
 }
 
 /*

@@ -243,6 +243,7 @@ void* accept_clients_connections(void* threa_struct){
         } else {
             if (all_clients == nullptr){
                 current_oponent = current_client; //set oponent to the first of the batch
+                oponent_connected = true;
                 all_clients = current_client;
                 leaf_client = all_clients;
                 current_client = (client_connection_t*)malloc(sizeof(client_connection_t));
@@ -277,9 +278,19 @@ void send_oponent_packet(char* buffer, uint32_t msg_size){
 
 //receive message from oponent player (blocking with timeout)
 char* recv_oponent_packet(uint32_t buffer_size){
-    char* buffer = (char*)malloc(buffer_size);
+    char* buffer = (char*)malloc(buffer_size+1);
     recv(current_oponent->socket, buffer, buffer_size, 0);
+    buffer[buffer_size] = (char)0;
     return buffer;
+}
+
+//returns null if no oponent has been set, otherwise returns the string of the IP address of the oponent
+char* get_oponent(){
+    if (oponent_connected){
+        return current_oponent->ip_addr;
+    } else {
+        return (char*)"none";
+    }
 }
 
 
