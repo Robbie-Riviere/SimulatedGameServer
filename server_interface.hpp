@@ -74,35 +74,30 @@ client_connection_t* all_clients;
 client_connection_t* current_oponent;
 //function for connection listening thread 
 pthread_t server_accepting_thread;
-void* accept_clients_connections(void* threa_struct);
+
 //structure for players (one needs to be active player the rest are spectators)
 
 //setup server to listen for broadcast messages
 //spin thread that listens for messages of the right type and replies with server info
-void open_server_broadcast_handler();
+extern "C" void open_server_broadcast_handler();
 
 //close broadcast message port
 //close listener thread
 //close accept thread
 //close accept socket
-void close_server();
+extern "C" void close_server();
 
 //open standard tcp server to listen for players to join this specific server
-void open_server();
+extern "C" void open_server();
 
 //send packet to all players on server (usually gamestate packet)
-void send_all_packet(char* buffer, int msg_size);
+extern "C" void send_all_packet(char* buffer, int msg_size);
 
 //send stringified packet to oponent player
-void send_oponent_packet(char* buffer, int msg_size);
+extern "C" void send_oponent_packet(char* buffer, int msg_size);
 
 //update the spectator and oponent structures to contian a new player as oponent
-void set_oponent(char* oponent_ip_addr);
+//extern "C" void set_oponent(char* oponent_ip_addr);
 
 //receive message from oponent player (blocking with timeout)
-void recv_oponent_packet(uint8_t* buffer, uint32_t buffer_size);
-
-//starts a thread that:
-//needs to listen for rtt packets and reply to them
-//needs to handle if a spectator leaves the connection.
-void spectator_handler();
+extern "C" char* recv_oponent_packet(uint32_t buffer_size);

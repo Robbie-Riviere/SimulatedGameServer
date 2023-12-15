@@ -1,6 +1,7 @@
 #include "server_interface.hpp"
 
 void* client_ping_response(void* thread_package);
+void* accept_clients_connections(void* threa_struct);
 void respond_to_client_ping(); //helper function for organization
 
 // get sockaddr, IPv4 or IPv6:
@@ -270,23 +271,17 @@ void send_oponent_packet(char* buffer, int msg_size){
 }
 
 //update the spectator and oponent structures to contian a new player as oponent
-void set_oponent(char* oponent_ip_addr){
+//void set_oponent(char* oponent_ip_addr){
     //not nessessary
-}
+//}
 
 //receive message from oponent player (blocking with timeout)
-void recv_oponent_packet(uint8_t* buffer, uint32_t buffer_size){
+char* recv_oponent_packet(uint32_t buffer_size){
+    char* buffer = (char*)malloc(buffer_size);
     recv(current_oponent->socket, buffer, buffer_size, 0);
+    return buffer;
 }
 
-
-
-//starts a thread that:
-//needs to listen for rtt packets and reply to them
-//needs to handle if a spectator leaves the connection.
-void spectator_handler(){
-    //not nessessary
-}
 
 /*
 int main(void)

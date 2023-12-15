@@ -1,6 +1,7 @@
 import ctypes
 import time
 
+##functions for client side
 def init_function_client_lib():
     library_definition = ctypes.CDLL('./client_interface.so')
     library_definition.open_socket.argtypes = [ctypes.c_char_p]
@@ -33,12 +34,46 @@ def send_packet(library_definition, packet):
     library_definition.send_packet(ctypes.c_char_p(packet), len(packet))
     return
 def recv_packet(library_definition):
-    max_len = 128
+    max_len = 9
     return library_definition.recv_packet(ctypes.c_uint32(max_len))
+
+
+##functions for serverside
+def init_function_server_lib():
+    library_definition = ctypes.CDLL('./client_interface.so')
+    #library_definition.send_all_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
+    library_definition.send_oponent_packet.argtypes = [ctypes.c_char_p, ctypes.c_uint32]
+    library_definition.recv_oponent_packet.argtypes = [ctypes.c_uint32]
+    library_definition.recv_oponent_packet.restype = ctypes.c_char_p
+    return library_definition
+
+def open_server_broadcast_handler(library_definition):
+    library_definition.open_server_broadcast_handler()
+    return
+
+def close_server(library_definition):
+    library_definition.close_server()
+    return
+
+def open_server(library_definition):
+    library_definition.open_server()
+    return
+
+#spectate not implemented 
+#def send_all_packet(library_definition):
+#    
+#    return
+
+def send_oponent_packet(library_definition, packet):
+    library_definition.send_all_packet(ctypes.c_char_p(packet), len(packet))
+    return
+
+def recv_oponent_packet(library_definition):
+    max_len = 9
+    return library_definition.recv_oponent_packet(ctypes.c_uint32(max_len))
 
 
 lib = init_function_client_lib()
 setup_server_search(lib)
 
 time.sleep(10)
-
